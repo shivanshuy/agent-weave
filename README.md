@@ -124,7 +124,9 @@ The application uses **LangGraph4j** to build a stateful agent graph with **MCP 
 
 1. **HelloState**: Extends `AgentState` from LangGraph4j, defining the state schema with channels for name, message, greeting, and status.
 
-2. **McpClient**: HTTP-based MCP client service that communicates with the MCP server at `http://localhost:9091/mcp`. It uses JSON-RPC 2.0 format to call MCP tools.
+2. **McpClient**: HTTP-based MCP client service that communicates with the MCP server at `http://localhost:9091/mcp`. It uses JSON-RPC 2.0 format to call MCP tools. All MCP tool call requests include the following headers:
+   - `Accept: application/json, text/event-stream`
+   - `Content-Type: application/json`
 
 3. **HelloNode**: Implements `AsyncNodeAction<HelloState>` from LangGraph4j. This node:
    - Calls the MCP server's `hello` tool using the `McpClient`
@@ -150,7 +152,35 @@ The application expects an MCP server running at `http://localhost:9091/mcp`. Yo
 mcp.server.url=http://localhost:9091/mcp
 ```
 
-Ensure the MCP server is running and exposes a `hello` tool before starting this application.
+### MCP Client Request Headers
+
+When making MCP tool calls, the `McpClient` includes the following request headers:
+
+- **Accept**: `application/json, text/event-stream`
+- **Content-Type**: `application/json`
+
+These headers are required for the MCP server's HTTP Sync Stateless protocol to properly handle requests and responses.
+
+### MCP Tool Call Request Format
+
+The MCP client sends JSON-RPC 2.0 requests with the following structure:
+
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "tool-name",
+    "arguments": {},
+    "_meta": {
+      "progressToken": 1234567890
+    }
+  },
+  "jsonrpc": "2.0",
+  "id": 1234567890
+}
+```
+
+Ensure the MCP server is running and exposes the required tools (e.g., `hello`, `readOutlookEmails`) before starting this application.
 
 ## License
 
